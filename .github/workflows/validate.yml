@@ -1,0 +1,66 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate SKILL.md frontmatter
+        run: |
+          python3 - <<'EOF'
+          import sys
+          with open('SKILL.md') as f:
+              content = f.read()
+          parts = content.split('---')
+          assert len(parts) >= 3, "No YAML frontmatter found"
+          import re
+          name = re.search(r'^name:\s*(.+)$', parts[1], re.MULTILINE)
+          desc = re.search(r'^description:', parts[1], re.MULTILINE)
+          assert name, "Missing 'name' in frontmatter"
+          assert desc, "Missing 'description' in frontmatter"
+          print(f"SKILL.md valid — name: {name.group(1).strip()}")
+          EOF
+
+      - name: Smoke test — scanner detects leaks
+        run: |
+          cat > /tmp/test_leak.js <<'EOF'
+          const api_key = "sk-proj-abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmn";
+          const db = "mongodb://admin:P@ssw0rd123@cluster.prod.internal:27017/app";
+          EOF
+          result=$(node scripts/detect.js /tmp/)
+          count=$(echo "$result" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
+          [ "$count" -gt "0" ] && echo "PASS: $count findings detected" || (echo "FAIL: scanner found nothing" && exit 1)
+
+      - name: Smoke test — no false positives on clean docs
+        run: |
+          mkdir -p /tmp/clean
+          cat > /tmp/clean/README.md <<'EOF'
+          # Setup Guide
+          Contact: support@example.com
+          Port: 3000
+          Password: placeholder
+          api_key: your-api-key-here
+          EOF
+          result=$(node scripts/detect.js /tmp/clean)
+          count=$(echo "$result" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
+          [ "$count" -eq "0" ] && echo "PASS: no false positives" || (echo "FAIL: $count unexpected findings" && exit 1)
+
+      - name: Verify required files exist
+        run: |
+          test -f SKILL.md        && echo "SKILL.md present"
+          test -f scripts/detect.js && echo "detect.js present"
+          test -f references/leak-patterns.md && echo "leak-patterns.md present"
+          test -f CHANGELOG.md    && echo "CHANGELOG.md present"
+          test -f LICENSE         && echo "LICENSE present"

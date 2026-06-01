@@ -1,0 +1,123 @@
+{
+  "skill_name": "leak-shield",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "credentials-in-config",
+      "prompt": "I'm about to push my Node.js project to GitHub for the first time. Can you scan `c:\\projects\\skills\\Data-leaks-skills\\leak-shield-workspace\\fixtures\\credentials-config` for any credentials or API keys that I shouldn't commit? Use the detect.js script from the leak-shield skill at `C:\\Users\\jochi\\.agents\\skills\\leak-shield`.",
+      "expected_output": "A markdown table listing at least 10 findings covering AWS key, AWS secret, GitHub PAT, Stripe key, Slack token, Slack webhook, Mailgun key, Twilio SID, SendGrid key, MongoDB URI, PostgreSQL URI. Values must be obfuscated (never shown in full). Remediation options offered.",
+      "files": [],
+      "expectations": [
+        "AWS API Key (AKIAIOSFODNN7EXAMPLE) is detected and shown obfuscated",
+        "AWS Secret Access Key is detected",
+        "GitHub Personal Access Token (ghp_...) is detected",
+        "Stripe API Key (sk_live_...) is detected",
+        "Slack Token (xoxb-...) is detected",
+        "Slack Webhook URL is detected",
+        "SendGrid API Key (SG...) is detected",
+        "Twilio Account SID (AC...) is detected",
+        "Mailgun API Key (key-...) is detected",
+        "At least one MongoDB or PostgreSQL connection string is detected",
+        "No finding shows a full unredacted secret value — all are obfuscated",
+        "Skill presents findings as a markdown table with File, Line, Category, Description columns",
+        "Skill offers remediation choices (extract to env var, delete, gitignore, whitelist)"
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "pii-in-csv",
+      "prompt": "I need to share a CSV export with an external data partner. Before I send it, please check `c:\\projects\\skills\\Data-leaks-skills\\leak-shield-workspace\\fixtures\\pii-csv` for any personal data that could violate GDPR. Use the detect.js script from the leak-shield skill at `C:\\Users\\jochi\\.agents\\skills\\leak-shield`.",
+      "expected_output": "Multiple GDPR/PII findings including email addresses, credit cards in plain and grouped formats, and phone numbers. All credit card numbers must appear obfuscated. Remediation options presented.",
+      "files": [],
+      "expectations": [
+        "At least 3 real email addresses (non-test domains) are flagged",
+        "Credit card in plain format (4111111111111111) is detected",
+        "Credit card with spaces (4111 1111 1111 1111) is detected — v1.1.0 regression check",
+        "Credit card with dashes (5500-0000-0000-0004) is detected — v1.1.0 regression check",
+        "Amex card (378282246310005) is detected",
+        "At least 2 US phone numbers are flagged",
+        "Credit card numbers are obfuscated in the output (shows ****-****-****-XXXX pattern)",
+        "Findings are grouped or presented clearly so the user can act on each one",
+        "CSV file is scanned (not skipped) — v1.1.0 regression check"
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "european-national-ids",
+      "prompt": "We're preparing for a GDPR compliance audit. Scan `c:\\projects\\skills\\Data-leaks-skills\\leak-shield-workspace\\fixtures\\european-national-ids` for any European national ID numbers, bank account details, or other sensitive personal data that should not be stored in plaintext. Use the detect.js script from the leak-shield skill at `C:\\Users\\jochi\\.agents\\skills\\leak-shield`.",
+      "expected_output": "Findings covering Belgian INSZ/Rijksregisternummer, IBAN, Swedish Personnummer, Spanish DNI, UK NINO, Polish PESEL, Dutch BSN, German Steuer-ID, Italian Codice Fiscale, French INSEE, Swiss AHV, Finnish HETU. All presented in a markdown table with obfuscated values.",
+      "files": [],
+      "expectations": [
+        "Belgian INSZ/Rijksregisternummer (90.02.01-997.04) is detected",
+        "IBAN bank account number (BE68 5390 0754 7034) is detected",
+        "Swedish Personnummer (811228-9874) is detected",
+        "Spanish DNI (12345678Z) is detected",
+        "UK National Insurance Number (AB 12 34 56 A) is detected",
+        "Polish PESEL (44051401458) is detected",
+        "Dutch BSN (111222333) is detected",
+        "German Steuer-ID (11234567899) is detected",
+        "Italian Codice Fiscale (MRARSS90A01H501Z) is detected",
+        "French INSEE (183058809906459) is detected",
+        "Swiss AHV number (756.1234.5678.97) is detected",
+        "Finnish Personal Identity Code (131052-308T) is detected",
+        "National ID values are obfuscated in the output — raw numbers not shown in full"
+      ]
+    },
+    {
+      "id": 4,
+      "eval_name": "false-positive-resilience",
+      "prompt": "Scan `c:\\projects\\skills\\Data-leaks-skills\\leak-shield-workspace\\fixtures\\false-positives` for data leaks. This is a documentation-only folder with only placeholder and example values — it should be clean. Report what you find. Use the detect.js script from the leak-shield skill at `C:\\Users\\jochi\\.agents\\skills\\leak-shield`.",
+      "expected_output": "The skill should report zero or near-zero findings. It must NOT flag example.com emails, placeholder passwords, your-api-key-here, port 3000, the invalid test credit card (fails Luhn), or the invalid SSN (000-00-0000).",
+      "files": [],
+      "expectations": [
+        "example.com email addresses are NOT flagged",
+        "test.com email addresses are NOT flagged",
+        "yourdomain.com and domain.com placeholder emails are NOT flagged",
+        "Port number 3000 is NOT flagged as a credential",
+        "Password value 'placeholder' is NOT flagged",
+        "API key value 'your-api-key-here' is NOT flagged",
+        "Credit card 4111 1111 1111 1112 (invalid Luhn) is NOT flagged",
+        "SSN 000-00-0000 (invalid area code) is NOT flagged",
+        "Total finding count is 0 — the skill correctly declares the directory clean",
+        "Skill confirms to the user that no leaks were found"
+      ]
+    },
+    {
+      "id": 5,
+      "eval_name": "edge-cases-regression",
+      "prompt": "I want to verify our leak scanner handles some tricky edge cases. Scan `c:\\projects\\skills\\Data-leaks-skills\\leak-shield-workspace\\fixtures\\edge-cases-regression` for data leaks. Use the detect.js script from the leak-shield skill at `C:\\Users\\jochi\\.agents\\skills\\leak-shield`.",
+      "expected_output": "The Google API key with AIza prefix (not AIzaSy) should be detected. Credit cards with spaces and dashes in the CSV should be detected. The DB connection string with an email address in the username should be reported as a DB credential (not duplicated as both DB credential + email). Private key block should be detected.",
+      "files": [],
+      "expectations": [
+        "Google API Key with AIza prefix (AIzaXBCDEFGHIJKLMNOPQRSTUVWXYZ123456789) is detected — v1.1.0 regression: old regex required AIzaSy prefix",
+        "Credit card with spaces (4111 1111 1111 1111) in CSV is detected — v1.1.0 CSV regression",
+        "Credit card with dashes (5500-0000-0000-0004) in CSV is detected — v1.1.0 CSV regression",
+        "DB connection string (postgresql://analyst@corp.com:...) is detected as Secrets/Credentials",
+        "The email address analyst@corp.com inside the DB URI is NOT reported as a separate Email finding — overlap dedup working",
+        "Private RSA key block (-----BEGIN RSA PRIVATE KEY-----) is detected",
+        "CSV file data/mixed.csv is scanned (not skipped as binary) — v1.1.0 CSV regression"
+      ]
+    },
+    {
+      "id": 6,
+      "eval_name": "new-detectors-v1.2.0",
+      "prompt": "Scan `c:\\projects\\skills\\Data-leaks-skills\\leak-shield-workspace\\fixtures\\new-detectors` for any data leaks. This directory contains modern API configuration and a European PII data export. Use the detect.js script from the leak-shield skill at `C:\\Users\\jochi\\.agents\\skills\\leak-shield`.",
+      "expected_output": "Findings covering JWT tokens, Azure Storage AccountKey, opaque Bearer tokens, Portuguese NIFs, Irish PPS numbers, Romanian CNPs, and MAC addresses — all with obfuscated values. Plus: localhost DB URIs in documentation should NOT be flagged.",
+      "files": [],
+      "expectations": [
+        "JWT Token (eyJhbG...) is detected as leakType 'JWT Token'",
+        "Azure Storage AccountKey is detected as 'Azure Storage Account Key'",
+        "Opaque Bearer token (abcdef...1234567890) is detected as 'Generic Bearer Token'",
+        "Portuguese NIF 123456789 is detected",
+        "Portuguese NIF 987654322 is detected",
+        "Irish PPS Number 1234567T is detected",
+        "Irish PPS Number 7654321G is detected",
+        "Romanian CNP 1900101123457 is detected",
+        "Romanian CNP 2850215456788 is detected",
+        "MAC address 00:1A:2B:3C:4D:5E is detected",
+        "MAC address AA-BB-CC-DD-EE-FF is detected",
+        "All values are obfuscated in the output — no raw key/ID shown in full"
+      ]
+    }
+  ]
+}
